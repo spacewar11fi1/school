@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="js/phaser.js"></script>
+</head>
+<body>
+
+
+<script>
+
+    var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
+
+    function preload () {
+
+        game.load.image('player', 'assets/ship.png');
+        game.load.image('enemy', 'assets/invader.png');
+        game.load.atlas('lazer', 'assets/laser.png', 'assets/laser.json');
+
+    }
+
+    var enemies;
+    var lazers;
+    var player;
+    var cursors;
+    var fireButton;
+    var bulletTime = 0;
+    var frameTime = 0;
+    var frames;
+
+    function create () {
+
+        /**
+         * Game Environment
+         */
+        game.world.setBounds(0, 0, 800*4, 600);
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+
+        /**
+         * Generate Animation Frames
+         */
+        frames = Phaser.Animation.generateFrameNames('frame', 2, 30, '', 2);
+        frames.unshift('frame02');
+
+        /**
+         * Player & Playerlaser
+         */
+        player = game.add.sprite(100, 300, 'player');
+        game.physics.enable(player, Phaser.Physics.ARCADE);
+        lazers = game.add.group();
+        lazers.enableBody = true;
+
+        /**
+         * Keybinding and camera control
+         */
+        cursors = game.input.keyboard.createCursorKeys();
+        fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+        game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1);
+
+        /**
+         * Enemies
+         */
+        enemies = game.add.group();
+        enemies.enableBody = true;
+        enemies.physicsBodyType = Phaser.Physics.ARCADE;
+        for (var i = 0; i < 30; i++)
+        {
+            enemies.create(game.world.randomX, game.world.randomY, 'enemy');
+        }
+    }
+
+    function update () {
+
+        /**
+         * Player movement
+         */
+        if (cursors.left.isDown)
+        {
+            player.x -= 8;
+        }
+        else if (cursors.right.isDown)
+        {
+            player.x += 8;
+        }
+
+        if (cursors.up.isDown)
+        {
+            player.y -= 8;
+        }
+        else if (cursors.down.isDown)
+        {
+            player.y += 8;
+        }
+        /**
+         * Shooting
+         */
+        if (fireButton.isDown)
+        {
+            fireBullet();
+        }
+        lazers.forEachAlive(updateBullets, this);
+
+        /**
+         * Collision handling
+         */
+        game.physics.arcade.overlap(lazers, enemies, collisionHandler, null, this);
+        game.physics.arcade.overlap(enemies, player, collisionPlayer, null, this);
+
+    }
+
+    function updateBullets (lazer) {
+        //  Adjust for camera scrolling
+        if (lazer.animations.frameName === 'frame02')
+        {
+            lazer.animations.next();
+        }
+        else
+        {
+            if (lazer.scale.x === 1)
+            {
+                lazer.x += 16;
+
+                if (lazer.x > (game.camera.view.right))
+                {
+                    lazer.kill();
+                }
+            }
+            else
+            {
+                lazer.x -= 16;
+
+                if (lazer.x < (game.camera.view.left))
+                {
+                    lazer.kill();
+                }
+            }
+        }
+
+    }
+
+    function fireBullet () {
+
+        if (game.time.now > bulletTime)
+        {
+            //  Grab the first bullet we can from the pool
+            lazer = lazers.getFirstDead(true, player.x + 24 * player.scale.x, player.y + 8, 'lazer');
+
+            lazer.animations.add('fire', frames, 60);
+            lazer.animations.frameName = 'frame02';
+
+            bulletTime = game.time.now + 250;
+        }
+
+    }
+
+    function collisionHandler (lazer, enemy) {
+        enemy.kill();
+
+        /*score += 20;
+        scoreText.text = scoreString + score;*/
+
+        //  And create an explosion :)
+/*        var explosion = explosions.getFirstExists(false);
+        explosion.reset(alien.body.x, alien.body.y);
+        explosion.play('kaboom', 30, false, true);*/
+
+        // if (aliens.countLiving() == 0)
+        // {
+        //     score += 1000;
+        //     scoreText.text = scoreString + score;
+        //
+        //     enemyBullets.callAll('kill',this);
+        //     stateText.text = " You Won, \n Click to restart";
+        //     stateText.visible = true;
+        //
+        //     //the "click to restart" handler
+        //     game.input.onTap.addOnce(restart,this);
+        // }
+    }
+
+    function collisionPlayer(player, enemy) {
+        enemy.kill();
+
+    }
+
+</script>
+
+
+
+
+</body>
+</html>

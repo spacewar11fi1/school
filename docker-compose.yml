@@ -1,0 +1,40 @@
+version: '2'
+
+networks:
+  LEMP:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: LEMP_nginx
+    ports:
+    - "80:80"
+    volumes:
+    - ./:/var/www/html/schule
+    - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+    - php
+    networks:
+    - LEMP
+
+  php:
+    build: ./php
+    container_name: LEMP_php
+    volumes:
+    - ./:/var/www/html/schule
+    - ./php/config/php.ini:/usr/local/etc/php/php.ini
+    - ./php/xdebug.ini:/usr/local/lib/php/doc/xdebug/xdebug.ini
+    ports:
+    - "9000:9000"
+    networks:
+    - LEMP
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: LEMP_phpMyAdmin
+    ports:
+    - "8183:80"
+    environment:
+      PMA_ARBITRARY: 1
+    networks:
+    - LEMP

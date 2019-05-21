@@ -1,0 +1,22 @@
+#space {
+    background: url("../assets/starfield.png");
+    width: 512px;
+    height: 512px;
+    position: absolute;
+}
+
+#player {
+    background: url("../assets/ship.png");
+    width: 34px;
+    height: 12px;
+    top: 300px;
+    left: 50px;
+    position: absolute;
+}
+
+#bullet {
+    background: url("../assets/lazer2.png");
+    height: 2px;
+    width: 50px;
+
+}
