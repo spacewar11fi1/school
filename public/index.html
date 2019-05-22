@@ -18,7 +18,11 @@
 
         game.load.image('player', 'assets/ship.png');
         game.load.image('enemy', 'assets/invader.png');
+        game.load.image('asteroid', 'assets/asteroid3.png');
+        game.load.image('star', 'assets/star.png');
+        game.load.image('enemyBullet', 'assets/bullet.png');
         game.load.atlas('lazer', 'assets/laser.png', 'assets/laser.json');
+
 
     }
 
@@ -28,8 +32,14 @@
     var cursors;
     var fireButton;
     var bulletTime = 0;
-    var frameTime = 0;
+    var firingTimer = 0;
     var frames;
+    var asteroids;
+    var lives;
+    var score = 0;
+    var boosts;
+    var enemyBullets;
+    var livingEnemies = [];
 
     function create () {
 
@@ -38,6 +48,11 @@
          */
         game.world.setBounds(0, 0, 800*4, 600);
         game.physics.startSystem(Phaser.Physics.ARCADE);
+        //scoreText = game.add.text(10, 0, 'score: 0', { font: "20px Arial", fill: "#ffffff", align: "top" });
+        //lives = game.add.group();
+        //lives.createMultiple(3, 'star', 0);
+        //lives.align(1, -1 , 48, 48);
+
 
         /**
          * Generate Animation Frames
@@ -66,14 +81,35 @@
         enemies = game.add.group();
         enemies.enableBody = true;
         enemies.physicsBodyType = Phaser.Physics.ARCADE;
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 15; i++)
         {
             enemies.create(game.world.randomX, game.world.randomY, 'enemy');
         }
+
+        asteroids = game.add.group();
+        asteroids.enableBody = true;
+        asteroids.physicsBodyType = Phaser.Physics.ARCADE;
+
+        for (var j = 0; j < 15; j++) {
+            asteroids.create(game.world.randomX, game.world.randomY, 'asteroid');
+        }
+
+        boosts = game.add.group();
+        boosts.enableBody = true;
+        boosts.physicsBodyType = Phaser.Physics.ARCADE;
+
+        enemyBullets = game.add.group();
+        enemyBullets.enableBody = true;
+        enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
+        enemyBullets.createMultiple(30, 'enemyBullet');
+
+
+
+
+
     }
 
     function update () {
-
         /**
          * Player movement
          */
@@ -94,6 +130,7 @@
         {
             player.y += 8;
         }
+
         /**
          * Shooting
          */
@@ -103,11 +140,16 @@
         }
         lazers.forEachAlive(updateBullets, this);
 
+        if (game.time.now > firingTimer)
+        {
+            enemyFires();
+        }
+
         /**
          * Collision handling
          */
         game.physics.arcade.overlap(lazers, enemies, collisionHandler, null, this);
-        game.physics.arcade.overlap(enemies, player, collisionPlayer, null, this);
+        game.physics.arcade.overlap(asteroids, player, collisionPlayer, null, this);
 
     }
 
@@ -156,8 +198,53 @@
 
     }
 
+    function enemyFires () {
+        enemyBullet = enemyBullets.getFirstExists(false);
+
+        livingEnemies.length=0;
+
+        enemies.forEachAlive(function(enemies){
+
+            livingEnemies.push(enemies);
+
+        });
+
+
+        if (enemyBullet && livingEnemies.length > 0)
+        {
+
+            // .integerInRange(min, max) : Returns a random integer between and including min and max.
+            var random=game.rnd.integerInRange(0,livingEnemies.length-1);
+
+
+            // randomly select one of them
+            var shooter=livingEnemies[random];
+
+
+            // And fire the bullet from this enemy
+            // .reset (x, y) : The Physics Body is linked to a single Sprite. All physics operations should be performed against the body rather than
+            //the Sprite itself. For example you can set the velocity, acceleration, bounce values etc all on the Body.
+            enemyBullet.reset(shooter.body.x, shooter.body.y);
+
+            // .moveToObject(displayObject, destination, speed, maxTime) : Move the given display object towards the destination object at a steady velocity.
+            game.physics.arcade.moveToObject(enemyBullet,player,120);
+
+            firingTimer = game.time.now + 2000;
+        }
+    }
+
+
     function collisionHandler (lazer, enemy) {
+        var deadx = enemy.x;
+        var deady = enemy.y;
+        var range = -50;
         enemy.kill();
+        lazer.kill();
+        var random = Math.round(Math.random());
+        if(random === 1) {
+            boosts.create(deadx + 30, deady, 'star');
+        }
+
 
         /*score += 20;
         scoreText.text = scoreString + score;*/
@@ -181,15 +268,16 @@
         // }
     }
 
-    function collisionPlayer(player, enemy) {
-        enemy.kill();
+    function collisionPlayer(player, asteroid) {
+        var asteroidx = asteroid.x;
+        var asteroidy = asteroid.y;
+        asteroid.kill();
+        var random = Math.round(Math.random());
+        if (random === 1) {
+            boosts.create(asteroidx + 30, asteroidy, 'star');
+        }
 
     }
-
 </script>
-
-
-
-
 </body>
 </html>
