@@ -20,7 +20,7 @@
         game.load.image('enemy', 'assets/invader.png');
         game.load.image('asteroid', 'assets/asteroid3.png');
         game.load.image('star', 'assets/star.png');
-        game.load.image('enemyBullet', 'assets/bullet.png');
+        game.load.image('enemyBullet', 'assets/enemy-bullet.png');
         game.load.atlas('lazer', 'assets/laser.png', 'assets/laser.json');
 
 
@@ -34,12 +34,11 @@
     var bulletTime = 0;
     var firingTimer = 0;
     var frames;
-    var asteroids;
-    var lives;
-    var score = 0;
+    var asteroids = [];
     var boosts;
     var enemyBullets;
     var livingEnemies = [];
+
 
     function create () {
 
@@ -48,11 +47,6 @@
          */
         game.world.setBounds(0, 0, 800*4, 600);
         game.physics.startSystem(Phaser.Physics.ARCADE);
-        //scoreText = game.add.text(10, 0, 'score: 0', { font: "20px Arial", fill: "#ffffff", align: "top" });
-        //lives = game.add.group();
-        //lives.createMultiple(3, 'star', 0);
-        //lives.align(1, -1 , 48, 48);
-
 
         /**
          * Generate Animation Frames
@@ -86,13 +80,22 @@
             enemies.create(game.world.randomX, game.world.randomY, 'enemy');
         }
 
+        moveEnemeis();
+
         asteroids = game.add.group();
         asteroids.enableBody = true;
         asteroids.physicsBodyType = Phaser.Physics.ARCADE;
 
-        for (var j = 0; j < 15; j++) {
+
+        for(var k=0; k<15; k++) {
             asteroids.create(game.world.randomX, game.world.randomY, 'asteroid');
         }
+        moveAsteroids();
+
+
+
+
+
 
         boosts = game.add.group();
         boosts.enableBody = true;
@@ -110,6 +113,8 @@
     }
 
     function update () {
+        //moveAsteroids();
+
         /**
          * Player movement
          */
@@ -145,12 +150,12 @@
             enemyFires();
         }
 
+
         /**
          * Collision handling
          */
         game.physics.arcade.overlap(lazers, enemies, collisionHandler, null, this);
         game.physics.arcade.overlap(asteroids, player, collisionPlayer, null, this);
-
     }
 
     function updateBullets (lazer) {
@@ -233,6 +238,19 @@
         }
     }
 
+    function moveAsteroids() {
+        asteroids.forEachAlive(function (asteroids) {
+            game.physics.arcade.moveToXY(asteroids, game.world.randomX, game.world.randomY);
+        });
+
+    }
+
+    function moveEnemeis() {
+        enemies.forEachAlive(function(enemies) {
+            game.physics.arcade.moveToXY(enemies, game.world.randomX, game.world.randomY);
+        });
+    }
+
 
     function collisionHandler (lazer, enemy) {
         var deadx = enemy.x;
@@ -244,39 +262,13 @@
         if(random === 1) {
             boosts.create(deadx + 30, deady, 'star');
         }
-
-
-        /*score += 20;
-        scoreText.text = scoreString + score;*/
-
-        //  And create an explosion :)
-/*        var explosion = explosions.getFirstExists(false);
-        explosion.reset(alien.body.x, alien.body.y);
-        explosion.play('kaboom', 30, false, true);*/
-
-        // if (aliens.countLiving() == 0)
-        // {
-        //     score += 1000;
-        //     scoreText.text = scoreString + score;
-        //
-        //     enemyBullets.callAll('kill',this);
-        //     stateText.text = " You Won, \n Click to restart";
-        //     stateText.visible = true;
-        //
-        //     //the "click to restart" handler
-        //     game.input.onTap.addOnce(restart,this);
-        // }
     }
 
     function collisionPlayer(player, asteroid) {
         var asteroidx = asteroid.x;
         var asteroidy = asteroid.y;
         asteroid.kill();
-        var random = Math.round(Math.random());
-        if (random === 1) {
-            boosts.create(asteroidx + 30, asteroidy, 'star');
-        }
-
+        player.kill();
     }
 </script>
 </body>
