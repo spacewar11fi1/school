@@ -22,6 +22,7 @@
         game.load.image('star', 'assets/star.png');
         game.load.image('enemyBullet', 'assets/enemy-bullet.png');
         game.load.atlas('lazer', 'assets/laser.png', 'assets/laser.json');
+        game.load.spritesheet('kaboom', 'assets/explode.png', 128, 128);
 
 
     }
@@ -30,6 +31,7 @@
     var lazers;
     var player;
     var cursors;
+    var explosions;
     var fireButton;
     var bulletTime = 0;
     var firingTimer = 0;
@@ -75,10 +77,7 @@
         enemies = game.add.group();
         enemies.enableBody = true;
         enemies.physicsBodyType = Phaser.Physics.ARCADE;
-        for (var i = 0; i < 15; i++)
-        {
-            enemies.create(game.world.randomX, game.world.randomY, 'enemy');
-        }
+        createEnemies();
 
         moveEnemeis();
 
@@ -86,15 +85,10 @@
         asteroids.enableBody = true;
         asteroids.physicsBodyType = Phaser.Physics.ARCADE;
 
-
         for(var k=0; k<15; k++) {
             asteroids.create(game.world.randomX, game.world.randomY, 'asteroid');
         }
         moveAsteroids();
-
-
-
-
 
 
         boosts = game.add.group();
@@ -106,14 +100,13 @@
         enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
         enemyBullets.createMultiple(30, 'enemyBullet');
 
-
-
-
+        explosions = game.add.group();
+        explosions.createMultiple(30, 'kaboom');
 
     }
 
     function update () {
-        //moveAsteroids();
+
 
         /**
          * Player movement
@@ -150,12 +143,19 @@
             enemyFires();
         }
 
+        asteroids.forEachAlive(function(asteroids) {
+            if(asteroids.body.x < game.world.x || asteroids.body.y < game.world.y){
+                moveAsteroids();
+            }
+        });
+
 
         /**
          * Collision handling
          */
         game.physics.arcade.overlap(lazers, enemies, collisionHandler, null, this);
         game.physics.arcade.overlap(asteroids, player, collisionPlayer, null, this);
+        game.physics.arcade.overlap(enemyBullets, player, collisionEnemeyBullet, null, this);
     }
 
     function updateBullets (lazer) {
@@ -232,7 +232,7 @@
             enemyBullet.reset(shooter.body.x, shooter.body.y);
 
             // .moveToObject(displayObject, destination, speed, maxTime) : Move the given display object towards the destination object at a steady velocity.
-            game.physics.arcade.moveToObject(enemyBullet,player,120);
+            game.physics.arcade.moveToObject(enemyBullet,player,200);
 
             firingTimer = game.time.now + 2000;
         }
@@ -253,23 +253,35 @@
 
 
     function collisionHandler (lazer, enemy) {
-        var deadx = enemy.x;
-        var deady = enemy.y;
-        var range = -50;
         enemy.kill();
         lazer.kill();
-        var random = Math.round(Math.random());
-        if(random === 1) {
-            boosts.create(deadx + 30, deady, 'star');
-        }
+
+        var explosion = explosions.getFirstExists(false);
+        explosion.reset(enemy.body.x, enemy.body.y);
+        explosion.play('kaboom', 30, true, true);
+        console.log(explosion.play);
     }
 
     function collisionPlayer(player, asteroid) {
-        var asteroidx = asteroid.x;
-        var asteroidy = asteroid.y;
         asteroid.kill();
-        player.kill();
+        //player.kill();
+
+
     }
+
+    function collisionEnemeyBullet(enemyBullet, player){
+        player.kill();
+        enemyBullet.kill();
+    }
+
+    function createEnemies()
+    {
+        for (var i = 0; i < 15; i++)
+        {
+            enemies.create(game.world.randomX, game.world.randomY, 'enemy');
+        }
+    }
+
 </script>
 </body>
 </html>
