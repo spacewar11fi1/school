@@ -101,9 +101,10 @@
         enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
         enemyBullets.createMultiple(30, 'enemyBullet');
 
+        //  An explosion pool
         explosions = game.add.group();
-        explosions.createMultiple(30, 'kaboom');
-        explosions.forEach(enemies, this);
+        explosions.createMultiple(40, 'kaboom');
+        explosions.forEach(setupInvader, this);
 
         //  The score
         scoreString = 'Score : ';
@@ -114,11 +115,6 @@
         liveString = 'Live    : ';
         liveText = game.add.text(0, 40, liveString + live, { font: '34px Arial', fill: '#fff', align: "left" });
         liveText.fixedToCamera = true;
-
-        //  An explosion pool
-        // explosions = game.add.group();
-        // explosions.createMultiple(30, 'kaboom');
-        // explosions.forEach(setupInvader, this);
     }
 
     function update () {
@@ -178,7 +174,19 @@
         if (live == 0)
         {
             player.kill();
+            var explosion = explosions.getFirstExists(false);
+            explosion.reset(player.body.x, player.body.y);
+            explosion.play('kaboom', 20, false, true);
         }
+    }
+
+    // Explosion animation
+    function setupInvader (invader) {
+
+        invader.anchor.x = 0.5;
+        invader.anchor.y = 0.5;
+        invader.animations.add('kaboom');
+
     }
 
     function updateBullets (lazer) {
@@ -292,6 +300,10 @@
         asteroid.kill();
         score += 10;
         scoreText.text = scoreString + score;
+
+        var explosion = explosions.getFirstExists(false);
+        explosion.reset(asteroid.body.x, asteroid.body.y);
+        explosion.play('kaboom', 40, false, true);
 
         //player.kill();
 
