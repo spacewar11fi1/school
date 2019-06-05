@@ -9,7 +9,6 @@
 </head>
 <body>
 
-
 <script>
 
     var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
@@ -40,6 +39,8 @@
     var boosts;
     var enemyBullets;
     var livingEnemies = [];
+    var score = 0;
+    var live = 3;
 
 
     function create () {
@@ -102,7 +103,22 @@
 
         explosions = game.add.group();
         explosions.createMultiple(30, 'kaboom');
+        explosions.forEach(enemies, this);
 
+        //  The score
+        scoreString = 'Score : ';
+        scoreText = game.add.text(0, 0, scoreString + score, { font: '34px Arial', fill: '#fff', align: "left" });
+        scoreText.fixedToCamera = true;
+
+        //  The live
+        liveString = 'Live    : ';
+        liveText = game.add.text(0, 40, liveString + live, { font: '34px Arial', fill: '#fff', align: "left" });
+        liveText.fixedToCamera = true;
+
+        //  An explosion pool
+        // explosions = game.add.group();
+        // explosions.createMultiple(30, 'kaboom');
+        // explosions.forEach(setupInvader, this);
     }
 
     function update () {
@@ -156,6 +172,13 @@
         game.physics.arcade.overlap(lazers, enemies, collisionHandler, null, this);
         game.physics.arcade.overlap(asteroids, player, collisionPlayer, null, this);
         game.physics.arcade.overlap(enemyBullets, player, collisionEnemeyBullet, null, this);
+        game.physics.arcade.overlap(enemies, player, collisionEnemey, null, this);
+
+        //Leben = 0
+        if (live == 0)
+        {
+            player.kill();
+        }
     }
 
     function updateBullets (lazer) {
@@ -254,24 +277,39 @@
 
     function collisionHandler (lazer, enemy) {
         enemy.kill();
+        //  Increase the score
+        score += 20;
+        scoreText.text = scoreString + score;
+
         lazer.kill();
 
         var explosion = explosions.getFirstExists(false);
         explosion.reset(enemy.body.x, enemy.body.y);
-        explosion.play('kaboom', 30, true, true);
-        console.log(explosion.play);
+        explosion.play('kaboom', 30, false, true);
     }
 
     function collisionPlayer(player, asteroid) {
         asteroid.kill();
+        score += 10;
+        scoreText.text = scoreString + score;
+
         //player.kill();
 
 
     }
 
-    function collisionEnemeyBullet(enemyBullet, player){
-        player.kill();
+    function collisionEnemeyBullet(player, enemyBullet){
+        //player.kill();
+        live --;
+        liveText.text = liveString + live;
         enemyBullet.kill();
+    }
+
+    function collisionEnemey(player, enemies)
+    {
+        live --;
+        liveText.text = liveString + live;
+        enemies.kill();
     }
 
     function createEnemies()
